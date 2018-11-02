@@ -1,0 +1,29 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "rewards-and-recognition-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/rewardsAndRecognition/RewardsAndRecognitionWebPart.js",
+          "manifest": "./src/webparts/rewardsAndRecognition/RewardsAndRecognitionWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {
+    "jquery": {
+      "path": "https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js",
+      "globalName": "jquery"
+      },
+      "bootstrap": {
+      "path": "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js",
+      "globalName": "bootstrap",
+      "globalDependencies": ["jquery"]
+      }
+
+  },
+  "localizedResources": {
+    "RewardsAndRecognitionWebPartStrings": "lib/webparts/rewardsAndRecognition/loc/{locale}.js"
+  }
+}

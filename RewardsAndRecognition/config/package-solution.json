@@ -1,0 +1,13 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "rewards-and-recognition-client-side-solution",
+    "id": "9f802111-307d-4c15-bfb7-9c2f6852358d",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true
+  },
+  "paths": {
+    "zippedPackage": "solution/rewards-and-recognition.sppkg"
+  }
+}
