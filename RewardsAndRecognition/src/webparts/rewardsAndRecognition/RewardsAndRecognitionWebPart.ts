@@ -26,8 +26,9 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
     SPComponentLoader.loadCss('https://use.fontawesome.com/releases/v5.4.1/css/all.css');
     var Context = this.context.pageContext.web.absoluteUrl;
     this.domElement.innerHTML = `
-      <div class="panel panel-primary" style="width:300px; margin-left:-16px">
-      <div class="panel-heading" style="font-size:15px; background-color:#023576;">Rewards And Recorgnition&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    
+      <div class="panel panel-primary" style="width:300px; margin-left:-16px;border-radius: 0px;">
+      <div class="panel-heading" style="font-size:15px; background-color:#023576;border-radius:initial">Rewards And Recorgnition&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <button class="btn btn-warning btn-circle" id="roundbutton" style="border-radius: 50%;">
       <i class='fa fa-trophy' style='font-size:20px;color:white'></i>
       </button> 
@@ -69,10 +70,8 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
         })
       }
       });
-      //checks the person already liked 
       $(document).on('click','.Like',function (){
         var UserID:any = $(this).attr("id");
-        var ClickID = $(this);
         for(var VerifyPresenseCount=0; VerifyPresenseCount<alreadyliked.length; VerifyPresenseCount++){
           if(alreadyliked[VerifyPresenseCount].UserLikedId==UserID && alreadyliked[VerifyPresenseCount].RewardUserId== CurrentUserId){
             alreadyPresent =true;
@@ -80,29 +79,24 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
         }
         if(!alreadyPresent){
           InsertLike(UserID);
-        }else{
-          
         }
       });
-      //finfing the current userId
       function GetUserDetails() { 
         var url =Context+ "/_api/web/currentuser"; 
           $.ajax({ 
             url: url, 
             headers: { 
-                Accept: "application/json;odata=verbose" 
-              }, 
+            Accept: "application/json;odata=verbose" 
+            }, 
             async: false, 
             success: function (data) { 
-              CurrentUserId= data.d.Id; 
-              }, 
+             CurrentUserId= data.d.Id; 
+            }, 
             error: function (data) { 
-              alert("An error occurred. Please try again."); 
+             alert("An error occurred. Please try again."); 
             } 
           }); 
         }  
-
-      //inserting the like how liked and whom he liked 
       function InsertLike(UserID){
         pnp.sp.web.lists.getByTitle('SpfxRewardsAndRecognitionLikes').items.add({UserLookupId:UserID}).then(()=>{
           GetUserDetails();
@@ -113,8 +107,7 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           alreadyPresent = false;
         })
       }
-
-      //shows the last 5 comments and allow to enter new comment
+     
       function getIncreaseTheComment(a){
         var table = null;
           var call = $.ajax({
@@ -172,9 +165,8 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
             alert("Call hutch failed. Error: " + message);
         });
       }
-
-      //getting each persons information
       function getTotalPerson(){
+        
         var TotalPersonCall = $.ajax({
           url : Context + "/_api/Web/Lists/getByTitle('SpfxRewardsAndRecognition')/items?&$top=3&$orderby=Created desc",
           type: "GET",
@@ -186,6 +178,7 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           }
         });
         TotalPersonCall.done(function (data, textStatus, jqXHR) {
+          
           $.each(data.d.results, function(index, element){
             TotalPerson.push(element.ID);
             getTotalLike(element.ID);
@@ -199,34 +192,34 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           alert("Call hutch failed. Error: " + message);
       });
       }
-      //finding total like according to the person
       function getTotalLike(element){
-          var TotalPersonLikeCall = $.ajax({
-            url : Context + `/_api/Web/Lists/getByTitle('SpfxRewardsAndRecognitionLikes')/items?$filter=(UserLookup eq '`+element+`')`,
-            type: "GET",
-            dataType: "json",
-            async:false,
-            headers: {
-                Accept: "application/json; odata=verbose",
-                "Content-Type": "application/json;odata=verbose"
-            }
-          });
-          TotalPersonLikeCall.done(function (data, textStatus, jqXHR) {
-            TotalLikePerPerson.push(data.d.results.length);
-            for(var checkCount=0; checkCount<data.d.results.length; checkCount++){
-              alreadyliked.push({UserLikedId:data.d.results[0].UserLookupId, RewardUserId:data.d.results[0].AuthorId });
-              
-            }
-          });
-          TotalPersonLikeCall.fail(function (jqXHR, textStatus, errorThrown) {
-            var response = JSON.parse(jqXHR.responseText);
-            var message = response ? response.error.message.value : textStatus;
-            alert("Call hutch failed. Error: " + message);
+        
+        var TotalPersonLikeCall = $.ajax({
+          url : Context + `/_api/Web/Lists/getByTitle('SpfxRewardsAndRecognitionLikes')/items?$filter=(UserLookup eq '`+element+`')`,
+          type: "GET",
+          dataType: "json",
+          async:false,
+          headers: {
+              Accept: "application/json; odata=verbose",
+              "Content-Type": "application/json;odata=verbose"
+          }
         });
+        TotalPersonLikeCall.done(function (data, textStatus, jqXHR) {
+          TotalLikePerPerson.push(data.d.results.length);
+          for(var checkCount=0; checkCount<data.d.results.length; checkCount++){
+            alreadyliked.push({UserLikedId:data.d.results[0].UserLookupId, RewardUserId:data.d.results[0].AuthorId });
+            
+          }
+        });
+        TotalPersonLikeCall.fail(function (jqXHR, textStatus, errorThrown) {
+          var response = JSON.parse(jqXHR.responseText);
+          var message = response ? response.error.message.value : textStatus;
+          alert("Call hutch failed. Error: " + message);
+      });
       }
-      //getting all comment according to that perticular person
       function getTotalComment(element){
-          var TotalPersonLikeCall = $.ajax({
+        
+        var TotalPersonLikeCall = $.ajax({
           url : Context + `/_api/Web/Lists/getByTitle('	SpfxRewardsAndRecognitionComments')/items?$filter=(UserLookup eq '`+element+`')`,
           type: "GET",
           dataType: "json",
@@ -238,14 +231,14 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
         });
         TotalPersonLikeCall.done(function (data, textStatus, jqXHR) {
           TotalCommentPerPerson.push(data.d.results.length);
+         // alert(data.d.results.length)
         });
         TotalPersonLikeCall.fail(function (jqXHR, textStatus, errorThrown) {
           var response = JSON.parse(jqXHR.responseText);
           var message = response ? response.error.message.value : textStatus;
           alert("Call hutch failed. Error: " + message);
-        });
+      });
       }
-      //showing all the rewards and recorgnition
       function GetRewardsInformation(){
         var RewardsAndRecorgnitionDiv = $(".RewardsAndRecorgnition");
         var RewardsAndRecorgnitionDivcall = $.ajax({
@@ -262,10 +255,11 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           var TagIndex = 0;
           $(".RewardsAndRecorgnition tr").remove();
           $.each(data.d.results, function(index, element){
-            RewardsAndRecorgnitionDiv.append(`<tr style="border-style: solid;border-width: 1px;"><td style="text-align: center;width:90px;"><div><img src="${element.ImageURL.Url}" alt="${element.Title}" style="width:90px"/><i class="fas fa-caret-right" style="position: absolute; top: `+(29+ TagIndex++*24)+`%; right: 69%; font-size: 18px;"></div></td>
-            <td style="text-align: center;background-color: #e6f9ff;"><div style="color: darkblue;font-size: medium;padding-top: 7px;padding-bottom: 7px;">${element.Title},${element.Role}</div>
-            <div style="width:186px;font-size: small; white-space: nowrap; width: 154px; overflow: hidden;text-overflow: ellipsis;">${element.Description}</div>
-            <div><div class="TotalLike" style="font-size:x-small"><button type="button" id="${element.ID}" class="Like" style="background-color:#e6f9ff;border: none;"><i class="fa fa-thumbs-up" aria-hidden="true"></i>(`+TotalLikePerPerson[index]+`like)</button><button type="button" id="${element.ID}" class="comment" data-toggle="modal" data-target="#commentModal" style="background-color:#e6f9ff;border: none;"><i class="fa fa-comment" aria-hidden="true"></i>(`+TotalCommentPerPerson[index] +`comment)</button></div></div></td></tr>`
+            RewardsAndRecorgnitionDiv.append(`<tr style="border-style: solid;border-width: 9px;border-color: white;"><td style="text-align: center;width:75px;"><div><img src="${element.ImageURL.Url}" alt="${element.Title}" style="width:75px" data-toggle='tooltip' title='${element.Title}' />
+            <i class="fas fa-caret-right" style="position: absolute; top: `+(29+ TagIndex++*24)+`%; right: 72%; font-size: 18px; color: darkblue;"></div></td>
+            <td style="text-align: center;background-color: lavender;"><div style="color: darkblue;font-size: medium;padding-top: 7px;padding-bottom: 7px;"><div style="white-space: nowrap; width: 100px; overflow: hidden;text-overflow: ellipsis;float:left;margin-left: 11px;" data-toggle='tooltip' title='${element.Title}' >${element.Title}</div><div style="white-space: nowrap; width: 95px; overflow: hidden;text-overflow: ellipsis; float:right" data-toggle='tooltip' title='${element.Role}'>,${element.Role}</div></div>
+            <div style="width:186px;font-size: small; white-space: nowrap; width: 154px; overflow: hidden;text-overflow: ellipsis;margin-left: 14px;" data-toggle='tooltip' title='${element.Description}'>${element.Description}</div>
+            <div><div class="TotalLike" style="font-size:x-small"><button type="button" id="${element.ID}" class="Like" style="background-color:lavender;border: none;"><i class="fa fa-thumbs-up" aria-hidden="true" style="color: darkblue;"></i>(`+TotalLikePerPerson[index]+`like)</button>&nbsp;&nbsp;&nbsp;<button type="button" id="${element.ID}" class="comment" data-toggle="modal" data-target="#commentModal" style="background-color:lavender;border: none;"><i class="fa fa-comment" aria-hidden="true" style="color: darkblue;"></i>(`+TotalCommentPerPerson[index] +`comment)</button></div></div></td></tr>`
             );
           });
         });
@@ -274,8 +268,9 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           var message = response ? response.error.message.value : textStatus;
           alert("Call hutch failed. Error: " + message);
       })
-    }
+      }
   }
+
 
   protected get dataVersion(): Version {
     return Version.parse('1.0');
@@ -283,18 +278,23 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
 
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
     return {
-      pages: [{
+      pages: [
+        {
           header: {
             description: strings.PropertyPaneDescription
           },
-          groups: [{
+          groups: [
+            {
               groupName: strings.BasicGroupName,
               groupFields: [
                 PropertyPaneTextField('description', {
                   label: strings.DescriptionFieldLabel
-                })]
-            }]
-        }]
+                })
+              ]
+            }
+          ]
+        }
+      ]
     };
   }
 }
