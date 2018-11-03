@@ -6,9 +6,6 @@ import {
 } from '@microsoft/sp-webpart-base';
 import * as strings from 'RewardsAndRecognitionWebPartStrings';
 import * as pnp from 'sp-pnp-js';
-import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
-//import * as JQuery from 'jquery';
-
 import 'jquery';
 require('bootstrap');
 import {SPComponentLoader} from '@microsoft/sp-loader'
@@ -27,7 +24,6 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
   public render(): void {
     SPComponentLoader.loadCss("https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css");
     SPComponentLoader.loadCss('https://use.fontawesome.com/releases/v5.4.1/css/all.css');
-    var ClientName = this.context.pageContext.user.displayName;
     var Context = this.context.pageContext.web.absoluteUrl;
     this.domElement.innerHTML = `
       <div class="panel panel-primary" style="width:300px; margin-left:-16px">
@@ -73,6 +69,7 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
         })
       }
       });
+      //checks the person already liked 
       $(document).on('click','.Like',function (){
         var UserID:any = $(this).attr("id");
         var ClickID = $(this);
@@ -81,29 +78,31 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
             alreadyPresent =true;
           }
         }
-        if(alreadyPresent){
-          DeleteLike(UserID);
-          //$("#"+UserID).text('Liked');
-        }else{
+        if(!alreadyPresent){
           InsertLike(UserID);
+        }else{
+          
         }
       });
+      //finfing the current userId
       function GetUserDetails() { 
         var url =Context+ "/_api/web/currentuser"; 
-        $.ajax({ 
-        url: url, 
-        headers: { 
-        Accept: "application/json;odata=verbose" 
-        }, 
-        async: false, 
-        success: function (data) { 
-        CurrentUserId= data.d.Id; 
-        }, 
-        error: function (data) { 
-        alert("An error occurred. Please try again."); 
-        } 
-        }); 
+          $.ajax({ 
+            url: url, 
+            headers: { 
+                Accept: "application/json;odata=verbose" 
+              }, 
+            async: false, 
+            success: function (data) { 
+              CurrentUserId= data.d.Id; 
+              }, 
+            error: function (data) { 
+              alert("An error occurred. Please try again."); 
+            } 
+          }); 
         }  
+
+      //inserting the like how liked and whom he liked 
       function InsertLike(UserID){
         pnp.sp.web.lists.getByTitle('SpfxRewardsAndRecognitionLikes').items.add({UserLookupId:UserID}).then(()=>{
           GetUserDetails();
@@ -114,15 +113,8 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           alreadyPresent = false;
         })
       }
-      function DeleteLike(userId){
-        pnp.sp.web.lists.getByTitle("EmployeeList").items.getById(userId).delete().then(()=>{
-          TotalPerson = [];
-          TotalLikePerPerson=[];
-          TotalCommentPerPerson = [];
-          getTotalPerson();
-        })
-      }
-     
+
+      //shows the last 5 comments and allow to enter new comment
       function getIncreaseTheComment(a){
         var table = null;
           var call = $.ajax({
@@ -180,8 +172,9 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
             alert("Call hutch failed. Error: " + message);
         });
       }
+
+      //getting each persons information
       function getTotalPerson(){
-        
         var TotalPersonCall = $.ajax({
           url : Context + "/_api/Web/Lists/getByTitle('SpfxRewardsAndRecognition')/items?&$top=3&$orderby=Created desc",
           type: "GET",
@@ -193,7 +186,6 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           }
         });
         TotalPersonCall.done(function (data, textStatus, jqXHR) {
-          
           $.each(data.d.results, function(index, element){
             TotalPerson.push(element.ID);
             getTotalLike(element.ID);
@@ -207,34 +199,34 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           alert("Call hutch failed. Error: " + message);
       });
       }
+      //finding total like according to the person
       function getTotalLike(element){
-        
-        var TotalPersonLikeCall = $.ajax({
-          url : Context + `/_api/Web/Lists/getByTitle('SpfxRewardsAndRecognitionLikes')/items?$filter=(UserLookup eq '`+element+`')`,
-          type: "GET",
-          dataType: "json",
-          async:false,
-          headers: {
-              Accept: "application/json; odata=verbose",
-              "Content-Type": "application/json;odata=verbose"
-          }
+          var TotalPersonLikeCall = $.ajax({
+            url : Context + `/_api/Web/Lists/getByTitle('SpfxRewardsAndRecognitionLikes')/items?$filter=(UserLookup eq '`+element+`')`,
+            type: "GET",
+            dataType: "json",
+            async:false,
+            headers: {
+                Accept: "application/json; odata=verbose",
+                "Content-Type": "application/json;odata=verbose"
+            }
+          });
+          TotalPersonLikeCall.done(function (data, textStatus, jqXHR) {
+            TotalLikePerPerson.push(data.d.results.length);
+            for(var checkCount=0; checkCount<data.d.results.length; checkCount++){
+              alreadyliked.push({UserLikedId:data.d.results[0].UserLookupId, RewardUserId:data.d.results[0].AuthorId });
+              
+            }
+          });
+          TotalPersonLikeCall.fail(function (jqXHR, textStatus, errorThrown) {
+            var response = JSON.parse(jqXHR.responseText);
+            var message = response ? response.error.message.value : textStatus;
+            alert("Call hutch failed. Error: " + message);
         });
-        TotalPersonLikeCall.done(function (data, textStatus, jqXHR) {
-          TotalLikePerPerson.push(data.d.results.length);
-          for(var checkCount=0; checkCount<data.d.results.length; checkCount++){
-            alreadyliked.push({UserLikedId:data.d.results[0].UserLookupId, RewardUserId:data.d.results[0].AuthorId });
-            
-          }
-        });
-        TotalPersonLikeCall.fail(function (jqXHR, textStatus, errorThrown) {
-          var response = JSON.parse(jqXHR.responseText);
-          var message = response ? response.error.message.value : textStatus;
-          alert("Call hutch failed. Error: " + message);
-      });
       }
+      //getting all comment according to that perticular person
       function getTotalComment(element){
-        
-        var TotalPersonLikeCall = $.ajax({
+          var TotalPersonLikeCall = $.ajax({
           url : Context + `/_api/Web/Lists/getByTitle('	SpfxRewardsAndRecognitionComments')/items?$filter=(UserLookup eq '`+element+`')`,
           type: "GET",
           dataType: "json",
@@ -246,14 +238,14 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
         });
         TotalPersonLikeCall.done(function (data, textStatus, jqXHR) {
           TotalCommentPerPerson.push(data.d.results.length);
-         // alert(data.d.results.length)
         });
         TotalPersonLikeCall.fail(function (jqXHR, textStatus, errorThrown) {
           var response = JSON.parse(jqXHR.responseText);
           var message = response ? response.error.message.value : textStatus;
           alert("Call hutch failed. Error: " + message);
-      });
+        });
       }
+      //showing all the rewards and recorgnition
       function GetRewardsInformation(){
         var RewardsAndRecorgnitionDiv = $(".RewardsAndRecorgnition");
         var RewardsAndRecorgnitionDivcall = $.ajax({
@@ -282,9 +274,8 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
           var message = response ? response.error.message.value : textStatus;
           alert("Call hutch failed. Error: " + message);
       })
-      }
+    }
   }
-
 
   protected get dataVersion(): Version {
     return Version.parse('1.0');
@@ -292,23 +283,18 @@ export default class RewardsAndRecognitionWebPart extends BaseClientSideWebPart<
 
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
     return {
-      pages: [
-        {
+      pages: [{
           header: {
             description: strings.PropertyPaneDescription
           },
-          groups: [
-            {
+          groups: [{
               groupName: strings.BasicGroupName,
               groupFields: [
                 PropertyPaneTextField('description', {
                   label: strings.DescriptionFieldLabel
-                })
-              ]
-            }
-          ]
-        }
-      ]
+                })]
+            }]
+        }]
     };
   }
 }
